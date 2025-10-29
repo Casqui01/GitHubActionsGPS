@@ -1,0 +1,43 @@
+name: Generacion OpenAPI -> Python Flask
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  generar-codigo:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java 17 (Temurin)
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Descargar openapi-generator-cli.jar
+        run: |
+          # Cambia la versión si quieres otra; aquí usamos 6.6.0 como ejemplo
+          export OAG_VERSION=6.6.0
+          curl -sSL -o openapi-generator-cli.jar \
+            https://repo1.maven.org/maven2/org/openapitools/openapi-generator-cli/${OAG_VERSION}/openapi-generator-cli-${OAG_VERSION}.jar
+          ls -lh openapi-generator-cli.jar
+
+      - name: Generar código Python Flask desde api.yaml
+        run: |
+          java -jar openapi-generator-cli.jar generate -i api.yaml -g python-flask -o ./openapi_server
+        # Nota: se usa python-flask como generador
+
+      - name: Comprimir resultado
+        run: |
+          zip -r openapi_server.zip openapi_server
+
+      - name: Subir artifact (openapi_server.zip)
+        uses: actions/upload-artifact@v4
+        with:
+          name: openapi_server_zip
+          path: openapi_server.zip
